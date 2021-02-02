@@ -1,0 +1,62 @@
+Wait for active shards-
+By default, index creation will only return a response to the client when the primary copies of each shard have
+ been started, or the request times out. T
+ he index creation response will indicate what happened:
+
+{
+  "acknowledged": true,
+  "shards_acknowledged": true,
+  "index": "test"
+}
+acknowledged indicates whether the index was successfully created in the cluster,
+ while shards_acknowledged indicates whether the requisite number of shard copies were started for each shard in the
+  index before timing out.
+Note that it is still possible for either acknowledged or shards_acknowledged to be false,
+but the index creation was successful.
+ These values simply indicate whether the operation completed before the timeout.
+  If acknowledged is false, then we timed out before the cluster state was updated with the newly created index,
+   but it probably will be created sometime soon.
+
+   If shards_acknowledged is false, then we timed out before the requisite number of shards were started
+   (by default just the primaries), even if the cluster state was successfully
+    updated to reflect the newly created index (i.e. acknowledged=true).
+
+We can change the default of only waiting for the primary shards to start through the index setting
+index.write.wait_for_active_shards (note that changing this setting will also affect the wait_for_active_shards
+ value on all subsequent write operations):
+
+PUT /test
+{
+  "settings": {
+    "index.write.wait_for_active_shards": "2"
+  }
+}
+Copy as cURL
+View in Console
+
+or through the request parameter wait_for_active_shards:
+
+PUT /test?wait_for_active_shards=2
+Copy as cURL
+View in Console
+
+-------------------
+Creating an index happens in multiple steps.
+ First the master adds the new index to the cluster state,
+  and then it allocates each shard (primaries and replicas) to nodes in the cluster.
+   Typically it works on allocating more than one shard at once, but if it's busy then it might take some time before
+   it gets around to the shards of this new index.
+
+In response to the creation of an index, {"acknowledged":true} means that every node acknowledged just the first
+state update in the process.
+ I'm not sure this is that useful to an end-user - as long as a majority of the master nodes acknowledged the first
+  state update then the index now exists, and you can tell that this has happened from the 200 OK response code.
+
+The process also waits for some of the shards to be assigned, using the wait_for_active_shards and
+timeout parameters 3, which default to waiting for up to 30 seconds for just the primaries all to be assigned.
+ However if this times out then you don't see any difference in the response.
+  This means that you can indeed create an index and receive a 200 OK response with {"acknowledged":true}
+  even though the index is not fully created.
+
+If this matters to you, you should repeatedly call GET _cluster/health/<index>?wait_for_status=yellow
+until this returns 200 OK, since this guarantees that all the primaries have indeed been assigned.

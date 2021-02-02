@@ -1,0 +1,50 @@
+PUT /my-index-000001
+{
+  "settings": {
+    "index": {
+      "number_of_shards": 3,
+      "number_of_replicas": 2
+    }
+  }
+}
+Default for number_of_shards is 1
+Default for number_of_replicas is 1 (ie one replica for each primary shard)
+
+simplified:
+PUT /my-index-000001
+{
+  "settings": {
+    "number_of_shards": 3,
+    "number_of_replicas": 2
+  }
+}
+
+mapping:
+The create index API allows for providing a mapping definition-
+PUT /test
+{
+  "settings": {
+    "number_of_shards": 1
+  },
+  "mappings": {
+    "properties": {
+      "field1": { "type": "text" }
+    }
+  }
+}
+
+Aliases
+The create index API allows also to provide a set of aliases:
+
+PUT /test
+{
+  "aliases": {
+    "alias_1": {},
+    "alias_2": {
+      "filter": {
+        "term": { "user.id": "kimchy" }
+      },
+      "routing": "shard-1"
+    }
+  }
+}
