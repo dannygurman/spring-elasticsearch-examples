@@ -1,6 +1,7 @@
 package spring.examples.elasticsearch.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import spring.examples.elasticsearch.model.Product;
 import spring.examples.elasticsearch.repositories.ProductRepository;
@@ -22,6 +23,16 @@ public class ProductService {
 
     public Iterable<Product> saveAll(final List<Product> products) {
         return productRepository.saveAll(products);
+    }
+
+    public void deleteAll() {
+        productRepository.deleteAll();
+    }
+
+
+    public Page<Product>  findAll() {
+        Page<Product>  products = (Page<Product>)productRepository.findAll();
+        return products;
     }
 
     public Optional<Product> findById(String id) {
