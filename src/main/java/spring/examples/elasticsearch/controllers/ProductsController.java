@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import spring.examples.elasticsearch.model.Product;
 import spring.examples.elasticsearch.services.ProductService;
 
+import java.util.List;
 import java.util.Optional;
 
 //Call example - http://127.0.0.1:9999/products/1
@@ -48,5 +49,10 @@ public class ProductsController {
     @GetMapping(path = "{id}")
     public Optional<Product> findById(@PathVariable(value = "id") String id) {
         return productService.findById(id);
+    }
+
+    @GetMapping(path = "/byname/{name}")
+    public List<Product> findByName(@PathVariable(value = "name") String name) {
+        return productService.findByName(name);
     }
 }

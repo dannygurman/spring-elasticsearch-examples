@@ -39,4 +39,7 @@ public class ProductService {
         return productRepository.findById(id);
     }
 
+    public List<Product> findByName(String name) {
+        return productRepository.findByName(name);
+    }
 }
