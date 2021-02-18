@@ -1,0 +1,11 @@
+Elasticsearch is built on top of Apache Lucene and was first released by Elasticsearch N.V. (now Elastic) in 2010.
+ According to the website of Elastic, it is a distributed open-source search and analytics engine f
+ or all types of data, including textual, numerical, geospatial, structured, and unstructured.
+
+ The operations of Elasticsearch are available as REST APIs. The primary functions are:
+
+ storing documents in an index,
+ searching the index with powerful queries to fetch those documents, and
+ run analytic functions on the data.
+ Spring Data Elasticsearch provides a simple interface to perform these operations on
+  Elasticsearch as an alternative to using the REST APIs directly.
