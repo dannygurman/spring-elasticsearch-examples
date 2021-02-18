@@ -6,7 +6,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 import spring.examples.elasticsearch.model.Product;
 import spring.examples.elasticsearch.services.ProductServiceWithRepository;
-import spring.examples.elasticsearch.services.ProductServiceWithRepository;
 
 import java.util.List;
 import java.util.Optional;
