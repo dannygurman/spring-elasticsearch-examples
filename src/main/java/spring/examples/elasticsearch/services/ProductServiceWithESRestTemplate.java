@@ -30,20 +30,26 @@ public class ProductServiceWithESRestTemplate {
     }
 
 
-    public String createProductIndex(Product product) {
-
-        IndexQuery indexQuery = new IndexQueryBuilder().withId(product.getId()).withObject(product).build();
+    public String index(Product product) {
+//Index an object. Will do save or update.
+        IndexQuery indexQuery = new IndexQueryBuilder()
+                .withId(product.getId())
+                .withObject(product)
+                .build();
         String documentId = elasticsearchOperations.index(indexQuery, IndexCoordinates.of(PRODUCTS_INDEX_NAME));
 
         return documentId;
     }
 
-    public List<String> createProductIndexBulk(final List<Product> products) {
-        final Function <Product,IndexQuery> productToIndexQueryMapper = product -> new IndexQueryBuilder().
-                withId(product.getId())
-                .withObject(product).build();
+    public List<String> bulkIndex(final List<Product> products) {
+        final Function <Product,IndexQuery> productToIndexQueryMapper = product -> new IndexQueryBuilder()
+                .withId(product.getId())
+                .withObject(product)
+                .build();
 
-        List<IndexQuery> queries = products.stream().map(productToIndexQueryMapper).collect(Collectors.toList());
+        List<IndexQuery> queries = products.stream()
+                .map(productToIndexQueryMapper)
+                .collect(Collectors.toList());
         return elasticsearchOperations.bulkIndex(queries, IndexCoordinates.of(PRODUCTS_INDEX_NAME));
 
     }
