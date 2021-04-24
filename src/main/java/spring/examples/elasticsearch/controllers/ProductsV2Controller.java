@@ -1,9 +1,6 @@
 package spring.examples.elasticsearch.controllers;
 
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import spring.examples.elasticsearch.model.Product;
 import spring.examples.elasticsearch.services.ProductServiceWithESRestTemplate;
 
@@ -16,15 +13,36 @@ public class ProductsV2Controller {
 
     private ProductServiceWithESRestTemplate productService;
 
-    @PostMapping
+    @PostMapping(path = "/createindex")
+    public boolean createIndex() {
+        return productService.createIndex();
+    }
+
+    @DeleteMapping(path = "/deleteindex")
+    public boolean deleteIndex() {
+        return productService.deleteIndex();
+    }
+
     /**
      * @Return - document id
      */
-    public String save(@RequestBody Product product) {
-        return productService.index(product);
+    @PostMapping(path = "/save")
+    public String saveItem(@RequestBody Product product) {
+        return productService.indexItem(product);
     }
 
-    public List<String> saveBulk(@RequestBody List<Product> products) {
-        return productService.bulkIndex(products);
+    @PostMapping(path = "/savebulk")
+    public List<String> saveItemsBulk(@RequestBody List<Product> products) {
+        return productService.bulkIndexItem(products);
+    }
+
+    @GetMapping(path = "/byname/{id}")
+    public Product findById(@PathVariable(value = "id") String id) {
+        return productService.findById(id);
+    }
+
+    @GetMapping(path = "/byname/{name}")
+    public List<Product> findByName(@PathVariable(value = "name") String name) {
+        return productService.findByName(name);
     }
 }

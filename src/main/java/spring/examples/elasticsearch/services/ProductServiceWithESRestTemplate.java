@@ -4,6 +4,7 @@ import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.IndexOperations;
 import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
@@ -41,7 +42,24 @@ public class ProductServiceWithESRestTemplate {
     }
 
 
-    public String index(Product product) {
+    public boolean createIndex() {
+        return getIndexOperations().create();
+    }
+
+    public boolean deleteIndex() {
+        return getIndexOperations().delete();
+    }
+
+    private IndexOperations getIndexOperations(){
+       return elasticsearchOperations.indexOps(productClazz);
+    }
+
+    public long count() {
+        Query searchQuery = new NativeSearchQueryBuilder().build();
+        return elasticsearchOperations.count(searchQuery, productClazz);
+    }
+
+    public String indexItem(Product product) {
 //Index an object. Will do save or update.
         IndexQuery indexQuery = new IndexQueryBuilder()
                 .withId(product.getId())
@@ -52,7 +70,7 @@ public class ProductServiceWithESRestTemplate {
         return documentId;
     }
 
-    public List<String> bulkIndex(final List<Product> products) {
+    public List<String> bulkIndexItem(final List<Product> products) {
         final Function <Product,IndexQuery> productToIndexQueryMapper = product -> new IndexQueryBuilder()
                 .withId(product.getId())
                 .withObject(product)
@@ -87,8 +105,10 @@ public class ProductServiceWithESRestTemplate {
         if (productHits.isEmpty()){
             return new ArrayList<>();
         }
-        Function <SearchHit<Product>, Product> mapper =  hit -> hit.getContent();
-        return   productHits.stream().map( mapper).collect(Collectors.toList());
+        Function<SearchHit<Product>, Product> mapper = hit -> hit.getContent();
+        return productHits.stream()
+                .map(mapper)
+                .collect(Collectors.toList());
     }
 
 }

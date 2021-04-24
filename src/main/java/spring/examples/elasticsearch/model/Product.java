@@ -1,5 +1,6 @@
 package spring.examples.elasticsearch.model;
 
+import lombok.Builder;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
@@ -8,6 +9,7 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
 import spring.examples.elasticsearch.config.IndexConsts;
 
 @Document(indexName = IndexConsts.PRODUCTS_INDEX_NAME)
+@Builder
 @Data
 public class Product {
     @Id

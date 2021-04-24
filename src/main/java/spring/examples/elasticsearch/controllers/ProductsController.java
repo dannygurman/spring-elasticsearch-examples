@@ -55,4 +55,9 @@ public class ProductsController {
     public List<Product> findByName(@PathVariable(value = "name") String name) {
         return productServiceWithRepo.findByName(name);
     }
+
+    @GetMapping(path = "count")
+    public long count() {
+        return productServiceWithRepo.count();
+    }
 }

@@ -1,0 +1,43 @@
+Analyzers
+All stored string fields are, by default, processed by an analyzer.
+
+An analyzer consists of one tokenizer and several token filters, and is usually
+preceded by one or more character filters.
+
+The default analyzer splits the string by common word separators (such as spaces or punctuation) and puts every
+token in lowercase.It also ignores common English words.
+
+Elasticsearch can also be configured to regard a field as analyzed and not-analyzed at the same time.
+
+For example, in an Article class, suppose we store the title field as a standard analyzed field.
+ The same field with the suffix verbatim will be stored as a not-analyzed field:
+-------
+@MultiField(
+  mainField = @Field(type = Text, fielddata = true),
+  otherFields = {
+      @InnerField(suffix = "verbatim", type = Keyword)
+  }
+)
+private String title;
+---------------
+Here, we apply the @MultiField annotation to tell Spring Data that we would like this field to be indexed in several ways.
+
+The main field will use the name title and will be analyzed according to the rules described above.
+
+But we also provide a second annotation, @InnerField, which describes an additional indexing of the title field.
+We use FieldType.keyword to indicate that we do NOT  want to use an analyzer when performing
+the additional indexing of the field,
+and that this value should be stored using a nested field with the suffix verbatim.
+
+Analyzed Fields
+--------------------
+Suppose an article with the title “Spring Data Elasticsearch” is added to our index.
+
+The default analyzer will break up the string at the space characters and produce
+lowercase tokens: “spring“, “data”, and “elasticsearch“.
+Now we may use any combination of these terms to match a document:
+NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
+  .withQuery(matchQuery("title", "elasticsearch data"))
+  .build();
+
+  

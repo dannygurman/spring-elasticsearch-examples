@@ -15,6 +15,10 @@ public class ProductServiceWithRepository {
     @Autowired
     private ProductRepository productRepository;
 
+    public long count(){
+        return productRepository.count();
+    }
+
     //Also create index if not exist + save document
     //Could be used also for update
     public Product save(final Product product) {
