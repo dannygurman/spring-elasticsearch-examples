@@ -17,6 +17,7 @@ import spring.examples.elasticsearch.model.Product;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -25,10 +26,11 @@ import static spring.examples.elasticsearch.config.IndexConsts.PRODUCTS_INDEX_NA
 @Service
 public class ProductServiceWithESRestTemplate {
 
-    private final IndexCoordinates indexCoordinates = IndexCoordinates.of(PRODUCTS_INDEX_NAME);
-    private final Class<Product> productClazz = Product.class;
-    private final String FIELD_NAME  = "name";
-
+    private static final IndexCoordinates indexCoordinates = IndexCoordinates.of(PRODUCTS_INDEX_NAME);
+    private static final Class<Product> productClazz = Product.class;
+    private static final String FIELD_NAME  = "name";
+    private static final Query MATCH_ALL_QUERY = new NativeSearchQueryBuilder()
+            .withQuery(QueryBuilders.matchAllQuery()).build();
 
     // ElasticsearchRestTemplate implements the interface ElasticsearchOperations,
     // which does the heavy lifting for low-level search and cluster actions.
@@ -48,6 +50,23 @@ public class ProductServiceWithESRestTemplate {
 
     public boolean deleteIndex() {
         return getIndexOperations().delete();
+    }
+
+    public void refresh() {
+         getIndexOperations().refresh();
+    }
+
+    public String mappingToString() {
+        StringBuffer  sb = new StringBuffer(" ------ Index mapping:\n");
+        Map mapping = getIndexOperations().getMapping();
+        mapping.forEach((key, val) -> {
+            sb.append("key:");
+            sb.append(key);
+            sb.append(" val:");
+            sb.append(val);
+            sb.append("\n");
+        });
+        return sb.toString();
     }
 
     private IndexOperations getIndexOperations(){
@@ -85,6 +104,12 @@ public class ProductServiceWithESRestTemplate {
     public  Product findById(String id) {
         return elasticsearchOperations.get(id, productClazz);
     }
+
+    public void deleteAllItems() {
+        elasticsearchOperations.delete(MATCH_ALL_QUERY, productClazz, indexCoordinates);
+    }
+
+
 
     /*
     Using NativeQuery
