@@ -7,6 +7,7 @@ import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.IndexOperations;
 import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
+import org.springframework.data.elasticsearch.core.document.Document;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.data.elasticsearch.core.query.IndexQuery;
 import org.springframework.data.elasticsearch.core.query.IndexQueryBuilder;
@@ -43,6 +44,9 @@ public class ProductServiceWithESRestTemplate {
         this.elasticsearchOperations = elasticsearchOperations;
     }
 
+    public boolean isExists() {
+        return getIndexOperations().exists();
+    }
 
     public boolean createIndex() {
         return getIndexOperations().create();
@@ -52,13 +56,30 @@ public class ProductServiceWithESRestTemplate {
         return getIndexOperations().delete();
     }
 
+    //From ES doc:
+    // A refresh makes all operations performed on an index since
+    // the last refresh available for search.
     public void refresh() {
          getIndexOperations().refresh();
     }
 
+    private Map getMapping() {
+        return getIndexOperations().getMapping();
+    }
+
+    //Creates the index mapping for the entity this IndexOperations is bound to.
+    private Document createMapping () {
+        return getIndexOperations().createMapping();
+    }
+
+    //writes a mapping to the index
+    public boolean putMapping () {
+        return getIndexOperations().putMapping(createMapping());
+    }
+
     public String mappingToString() {
         StringBuffer  sb = new StringBuffer(" ------ Index mapping:\n");
-        Map mapping = getIndexOperations().getMapping();
+        Map mapping = getMapping();
         mapping.forEach((key, val) -> {
             sb.append("key:");
             sb.append(key);

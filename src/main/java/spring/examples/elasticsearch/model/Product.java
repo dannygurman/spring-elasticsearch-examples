@@ -3,15 +3,19 @@ package spring.examples.elasticsearch.model;
 import lombok.Builder;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.elasticsearch.annotations.Document;
-import org.springframework.data.elasticsearch.annotations.Field;
-import org.springframework.data.elasticsearch.annotations.FieldType;
+import org.springframework.data.elasticsearch.annotations.*;
 import spring.examples.elasticsearch.config.IndexConsts;
 
 @Document(indexName = IndexConsts.PRODUCTS_INDEX_NAME)
 @Builder
 @Data
 public class Product {
+
+    //The primary difference between text and a keyword is that a text field will be tokenized while a keyword cannot.
+
+    //We can use the keyword type when we want to perform filtering or sorting operations on the field.
+    //Normalizers are similar to analyzers with the difference that normalizers don’t apply a tokenizer.
+
     @Id
     private String id;
 
@@ -24,7 +28,13 @@ public class Product {
     @Field(type = FieldType.Integer, name = "quantity")
     private Integer quantity;
 
-    @Field(type = FieldType.Keyword, name = "category")
+    @MultiField(
+            mainField = @Field(name = "category",type = FieldType.Text, fielddata = true),
+           // We use FieldType.keyword to indicate that we do NOT want to use an analyzer when performing the
+            // additional indexing of the field.
+            otherFields = {
+                    @InnerField(suffix = "xxx", type = FieldType.Keyword, store = true )
+            })
     private String category;
 
     @Field(type = FieldType.Text, name = "desc")
