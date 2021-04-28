@@ -6,6 +6,9 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.*;
 import spring.examples.elasticsearch.config.IndexConsts;
 
+import static spring.examples.elasticsearch.config.IndexConsts.PRODUCT_FIELD_CATEGORY;
+import static spring.examples.elasticsearch.config.IndexConsts.PRODUCT_FIELD_NAME;
+
 @Document(indexName = IndexConsts.PRODUCTS_INDEX_NAME)
 @Builder
 @Data
@@ -19,7 +22,7 @@ public class Product {
     @Id
     private String id;
 
-    @Field(type = FieldType.Text, name = "name")
+    @Field(type = FieldType.Text, name = PRODUCT_FIELD_NAME)
     private String name;
 
     @Field(type = FieldType.Double, name = "price")
@@ -29,11 +32,11 @@ public class Product {
     private Integer quantity;
 
     @MultiField(
-            mainField = @Field(name = "category",type = FieldType.Text, fielddata = true),
+            mainField = @Field(name = PRODUCT_FIELD_CATEGORY,type = FieldType.Text, fielddata = true),
            // We use FieldType.keyword to indicate that we do NOT want to use an analyzer when performing the
-            // additional indexing of the field.
+            // additional indexing of the field.keyword could be used,for example, for aggregation
             otherFields = {
-                    @InnerField(suffix = "xxx", type = FieldType.Keyword, store = true )
+                    @InnerField(suffix = IndexConsts.PRODUCTS_CATEGORY_SUFFIX, type = FieldType.Keyword, store = true )
             })
     private String category;
 

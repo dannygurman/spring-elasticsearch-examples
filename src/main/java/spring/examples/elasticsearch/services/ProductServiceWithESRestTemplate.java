@@ -9,10 +9,7 @@ import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.document.Document;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
-import org.springframework.data.elasticsearch.core.query.IndexQuery;
-import org.springframework.data.elasticsearch.core.query.IndexQueryBuilder;
-import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
-import org.springframework.data.elasticsearch.core.query.Query;
+import org.springframework.data.elasticsearch.core.query.*;
 import org.springframework.stereotype.Service;
 import spring.examples.elasticsearch.model.Product;
 
@@ -22,14 +19,13 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static spring.examples.elasticsearch.config.IndexConsts.PRODUCTS_INDEX_NAME;
+import static spring.examples.elasticsearch.config.IndexConsts.*;
 
 @Service
 public class ProductServiceWithESRestTemplate {
 
     private static final IndexCoordinates indexCoordinates = IndexCoordinates.of(PRODUCTS_INDEX_NAME);
     private static final Class<Product> productClazz = Product.class;
-    private static final String FIELD_NAME  = "name";
     private static final Query MATCH_ALL_QUERY = new NativeSearchQueryBuilder()
             .withQuery(QueryBuilders.matchAllQuery()).build();
 
@@ -131,21 +127,32 @@ public class ProductServiceWithESRestTemplate {
     }
 
 
-
-    /*
-    Using NativeQuery
-    NativeQuery provides the maximum flexibility for building a query using objects representing Elasticsearch
-     constructs like aggregation, filter, and sort. Here is a NativeQuery for
-    searching products matching a particular name:
-     */
     public List<Product> findByName(String name) {
-        MatchQueryBuilder queryBuilder = QueryBuilders.matchQuery(FIELD_NAME, name);
-        Query searchQuery = new NativeSearchQueryBuilder().withQuery(queryBuilder).build();
+        return findByValue(PRODUCT_FIELD_NAME, name);
+    }
+
+    public List<Product> findByCategory(String category) {
+        return findByValue(PRODUCT_FIELD_CATEGORY, category);
+    }
+
+    public List<Product> findByCategoryKeyword(String category) {
+        return findByValue(PRODUCT_FIELD_CATEGORY + "." + PRODUCTS_CATEGORY_SUFFIX , category);
+    }
+
+    private List<Product> findByValue(String fieldName, String value) {
+        Query searchQuery = createBasicMatchQuery(fieldName, value);
         SearchHits<Product> productHits = elasticsearchOperations.search(searchQuery, productClazz, indexCoordinates);
         List<Product> products = getProducts(productHits);
         return products;
     }
 
+    private NativeSearchQuery createBasicMatchQuery(String fieldName, String value) {
+      /*  Using NativeQuery
+        NativeQuery provides the maximum flexibility for building a query using objects representing Elasticsearch
+        constructs like aggregation, filter, and sort. */
+        MatchQueryBuilder queryBuilder = QueryBuilders.matchQuery(fieldName, value);
+        return new NativeSearchQueryBuilder().withQuery(queryBuilder).build();
+    }
 
     private List<Product> getProducts(SearchHits<Product> productHits) {
         if (productHits.isEmpty()){
