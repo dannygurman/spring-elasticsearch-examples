@@ -1,6 +1,9 @@
 package spring.examples.elasticsearch.services;
 
+import org.apache.coyote.Response;
+import org.elasticsearch.common.unit.Fuzziness;
 import org.elasticsearch.index.query.MatchQueryBuilder;
+import org.elasticsearch.index.query.Operator;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
@@ -12,6 +15,7 @@ import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.data.elasticsearch.core.query.*;
 import org.springframework.stereotype.Service;
 import spring.examples.elasticsearch.model.Product;
+import spring.examples.elasticsearch.model.QueryResponse;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -150,18 +154,31 @@ public class ProductServiceWithESRestTemplate {
       /*  Using NativeQuery
         NativeQuery provides the maximum flexibility for building a query using objects representing Elasticsearch
         constructs like aggregation, filter, and sort. */
-        MatchQueryBuilder queryBuilder = QueryBuilders.matchQuery(fieldName, value);
+        MatchQueryBuilder queryBuilder = createMatchQueryBuilder(fieldName, value) ;
         return new NativeSearchQueryBuilder().withQuery(queryBuilder).build();
     }
 
-    private List<Product> getProducts(SearchHits<Product> productHits) {
+    private MatchQueryBuilder createMatchQueryBuilder(String fieldName, String value) {
+        return QueryBuilders
+                .matchQuery(fieldName, value);
+               // .fuzziness(Fuzziness.ONE)
+            //    .operator(Operator.AND)
+               // .prefixLength(3);
+    }
+
+    private List<QueryResponse<Product>> getQueryResponses(SearchHits<Product> productHits) {
         if (productHits.isEmpty()){
             return new ArrayList<>();
         }
-        Function<SearchHit<Product>, Product> mapper = hit -> hit.getContent();
         return productHits.stream()
-                .map(mapper)
+                .map(QueryResponse::new)
                 .collect(Collectors.toList());
+    }
+
+    private List<Product> getProducts(SearchHits<Product> productHits) {
+        return getQueryResponses(productHits)
+                .stream()
+                .map(res -> res.getContent()).collect(Collectors.toList());
     }
 
 }
