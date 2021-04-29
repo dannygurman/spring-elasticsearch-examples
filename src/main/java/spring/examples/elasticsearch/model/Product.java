@@ -12,7 +12,7 @@ import static spring.examples.elasticsearch.config.IndexConsts.PRODUCT_FIELD_NAM
 @Document(indexName = IndexConsts.PRODUCTS_INDEX_NAME)
 @Builder
 @Data
-public class Product {
+public class Product implements Entity {
 
     //The primary difference between text and a keyword is that a text field will be tokenized while a keyword cannot.
 
