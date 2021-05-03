@@ -1,6 +1,9 @@
 package spring.examples.elasticsearch.services;
 
+import org.elasticsearch.common.unit.Fuzziness;
 import org.elasticsearch.index.query.MatchQueryBuilder;
+import org.elasticsearch.index.query.Operator;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.IndexOperations;
@@ -135,28 +138,57 @@ public abstract class AbstractServiceWithESRestTemplate<T extends Entity> {
     }
 
 
-    protected List<T> findByValue(String fieldName, String value) {
-        Query searchQuery = createBasicMatchQuery(fieldName, value);
+    public List<T> findByValue(String fieldName, String value) {
+        QueryBuilder matchQueryBuilder = createBasicMatchQueryBuilder(fieldName, value);
+        return findByValuesInternal(matchQueryBuilder);
+
+    }
+
+    private MatchQueryBuilder createBasicMatchQueryBuilder(String fieldName, String value) {
+        return QueryBuilders.matchQuery(fieldName, value);
+    }
+
+    public List<T> findByValue(String fieldName, String value,  Operator operator, Fuzziness fuzziness,
+                                  int prefixLength) {
+        QueryBuilder matchQueryBuilder = createMatchQueryBuilder(fieldName, value, operator , fuzziness, prefixLength);
+        return findByValuesInternal(matchQueryBuilder);
+    }
+
+    /**
+     *
+     * fuzziness:  When the user makes a typo in a word, it is still possible to match it with a search by
+     * specifying a fuzziness parameter, which allows inexact matching.     *
+     * For string fields, fuzziness means the edit distance: the number of one-character changes that need
+     * to be made to one string to make it the same as another string.
+     *
+     * The prefix_length parameter is used to improve performance.
+     * For example if set to 3 it require that the first three characters should match exactly,
+     * which reduces the number of possible combinations.
+     */
+    private MatchQueryBuilder createMatchQueryBuilder(String fieldName, String value, Operator operator,
+                                                        Fuzziness fuzziness, int prefixLength) {
+        return QueryBuilders
+                .matchQuery(fieldName, value)
+                .fuzziness(fuzziness)
+                .operator(operator)
+                .prefixLength(prefixLength);
+    }
+
+
+    /*  Using NativeQuery
+      NativeQuery provides the maximum flexibility for building a query using objects
+       representing Elasticsearch constructs like aggregation, filter, and sort.
+       */
+    private List <T> findByValuesInternal(QueryBuilder queryBuilder) {
+        Query searchQuery =  new NativeSearchQueryBuilder().withQuery(queryBuilder).build();
         SearchHits<T> searchHits = elasticsearchOperations.search(searchQuery, itemClazz, getIndexCoordinates());
         List<T> items = getItems(searchHits);
         return items;
     }
 
-    protected NativeSearchQuery createBasicMatchQuery(String fieldName, String value) {
-      /*  Using NativeQuery
-        NativeQuery provides the maximum flexibility for building a query using objects representing Elasticsearch
-        constructs like aggregation, filter, and sort. */
-        MatchQueryBuilder queryBuilder = createMatchQueryBuilder(fieldName, value) ;
-        return new NativeSearchQueryBuilder().withQuery(queryBuilder).build();
-    }
 
-    private MatchQueryBuilder createMatchQueryBuilder(String fieldName, String value) {
-        return QueryBuilders
-                .matchQuery(fieldName, value);
-        // .fuzziness(Fuzziness.ONE)
-        //    .operator(Operator.AND)
-        // .prefixLength(3);
-    }
+
+
 
     private List<QueryResponse<T>> getQueryResponses(SearchHits<T> searchHits) {
         if (searchHits.isEmpty()){

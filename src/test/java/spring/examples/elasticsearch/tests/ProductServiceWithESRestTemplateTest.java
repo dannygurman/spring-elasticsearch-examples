@@ -1,5 +1,7 @@
 package spring.examples.elasticsearch.tests;
 
+import org.elasticsearch.common.unit.Fuzziness;
+import org.elasticsearch.index.query.Operator;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -14,10 +16,13 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static spring.examples.elasticsearch.config.IndexConsts.PRODUCT_FIELD_NAME;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest
 public class ProductServiceWithESRestTemplateTest {
+
+    private  final static String SPACE = " ";
     @Autowired
     private ProductServiceWithESRestTemplate productService;
 
@@ -47,7 +52,6 @@ public class ProductServiceWithESRestTemplateTest {
 
         productService.indexItem(pr1);
         productService.refresh();
-        sleep();
 
         assertEquals(1 , productService.count());
 
@@ -66,7 +70,7 @@ public class ProductServiceWithESRestTemplateTest {
                 .category("cat1").build();
 
         productService.indexItem(pr1);
-        sleep();
+        productService.refresh();
         List<Product> foundProducts = productService.findByName(name);
         assertEquals(1 , foundProducts.size());
         assertEquals(pr1 , foundProducts.get(0));
@@ -79,10 +83,11 @@ public class ProductServiceWithESRestTemplateTest {
         String id2= "id2";
         String name_1 = "name1";
         String name_2 = "name2";
+
         String category_1 = "abc";
         String cat_part1 = "def";
         String cat_part2 = "hjk";
-        String category_2 = cat_part1 + " " + cat_part2;
+        String category_2 = cat_part1 + SPACE + cat_part2;
 
         Product pr1 = Product.builder().id(id1).name(name_1).category(category_1).build();
         Product pr2 = Product.builder().id(id2).name(name_2).category(category_2).build();
@@ -96,12 +101,14 @@ public class ProductServiceWithESRestTemplateTest {
         foundProducts = productService.findByCategoryKeyword(category_1);
         assertEquals(1 , foundProducts.size());
 
+
         foundProducts = productService.findByCategory(category_2);
         assertEquals(1 , foundProducts.size());
 
         //Text field analyzing found part of word split by spaces
         foundProducts = productService.findByCategory(category_2);
         assertEquals(1 , foundProducts.size());
+
 
         //Keyword not found part of word
         foundProducts = productService.findByCategoryKeyword(cat_part1);
@@ -113,13 +120,36 @@ public class ProductServiceWithESRestTemplateTest {
 
     }
 
-    private void sleep() {
-        try {
-            Thread.sleep(1500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+    @Test
+    public void whenSearchWithMatchQuery_UsingOrOperator_OneTermMatch_ThenFound() {
+        String name_part_1 = "aaa";
+        String name_part_2 = "bbb";
+        String name = name_part_1 + SPACE + name_part_2;
+        String searchString = "xxx" + SPACE + name_part_2;
+        verifyOneTermMatchInternal(name, searchString, Operator.OR , 1);
     }
+
+    @Test
+    public void whenSearchWithMatchQuery_UsingAndOperator_OneTermMatch_ThenNOTFound() {
+        String name_part_1 = "aaa";
+        String name_part_2 = "bbb";
+        String name = name_part_1 + SPACE + name_part_2;
+        String searchString = "xxx" + SPACE + name_part_2;
+        verifyOneTermMatchInternal(name, searchString, Operator.AND , 0);
+    }
+
+    private void verifyOneTermMatchInternal(String productName, String searchString ,
+                                            Operator operator , int expectedFoundCount ){
+        Product pr1 = Product.builder().name(productName).build();
+        productService.indexItem(pr1);
+        productService.refresh();
+        List<Product> foundProducts = productService.findByValue(PRODUCT_FIELD_NAME , searchString,
+                operator, Fuzziness.AUTO , 0);
+        assertEquals(expectedFoundCount , foundProducts.size());
+    }
+
+
+
 
     private void printIndexMapping(){
         System.out.println("*************************");
