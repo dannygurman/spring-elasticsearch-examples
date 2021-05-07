@@ -148,7 +148,31 @@ public class ProductServiceWithESRestTemplateTest {
         assertEquals(expectedFoundCount , foundProducts.size());
     }
 
+    @Test
+    public void whenSearchWithMatchQuery_variationsInFuzzinessInDistanceLimit_ThenFound() {
+        String name = "abcde";
+        String searchString = "abxxe";
+        Fuzziness fuzziness = Fuzziness.TWO;
+        verifyMatchByFuzzinessInternal(name, searchString, fuzziness , 1);
+    }
 
+    @Test
+    public void whenSearchWithMatchQuery_variationsInFuzzinessAboveDistanceLimit_ThenNotFound() {
+        String name = "abcde";
+        String searchString = "abxxe";
+        Fuzziness fuzziness = Fuzziness.ONE;
+        verifyMatchByFuzzinessInternal(name, searchString, fuzziness , 0);
+    }
+
+    private void verifyMatchByFuzzinessInternal(String productName, String searchString ,
+                                             Fuzziness fuzziness , int expectedFoundCount ){
+        Product pr1 = Product.builder().name(productName).build();
+        productService.indexItem(pr1);
+        productService.refresh();
+        List<Product> foundProducts = productService.findByValue(PRODUCT_FIELD_NAME , searchString,
+                Operator.AND, fuzziness , 0);
+        assertEquals(expectedFoundCount , foundProducts.size());
+    }
 
 
     private void printIndexMapping(){
