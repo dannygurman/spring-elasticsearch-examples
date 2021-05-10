@@ -157,7 +157,7 @@ public class ProductServiceWithESRestTemplateTest {
     }
 
     @Test
-    public void whenSearchWithMatchQuery_variationsInFuzzinessAboveDistanceLimit_ThenNotFound() {
+    public void whenSearchWithMatchQuery_variationsInFuzzinessAboveDistanceLimit_ThenNOTFound() {
         String name = "abcde";
         String searchString = "abxxe";
         Fuzziness fuzziness = Fuzziness.ONE;
@@ -171,6 +171,33 @@ public class ProductServiceWithESRestTemplateTest {
         productService.refresh();
         List<Product> foundProducts = productService.findByValue(PRODUCT_FIELD_NAME , searchString,
                 Operator.AND, fuzziness , 0);
+        assertEquals(expectedFoundCount , foundProducts.size());
+    }
+
+    @Test
+    public void whenSearchWithMatchQuery_prefixMatch_ThenFound() {
+        String name = "abcde";
+        String searchString = "abxxe";
+        int  prefixLength = 2;
+        verifyMatchByPrefixLengthInternal(name, searchString, prefixLength , 1);
+    }
+
+    @Test
+    public void whenSearchWithMatchQuery_prefixNOTMatch_ThenNOTFound() {
+        String name = "abcde";
+        String searchString = "xxcde";
+        int  prefixLength = 2;
+        verifyMatchByPrefixLengthInternal(name, searchString, prefixLength , 0);
+    }
+
+    private void verifyMatchByPrefixLengthInternal(String productName, String searchString ,
+                                                int prefixLength , int expectedFoundCount ){
+        Product pr1 = Product.builder().name(productName).build();
+        productService.indexItem(pr1);
+        productService.refresh();
+        Fuzziness fuzziness = Fuzziness.TWO;
+        List<Product> foundProducts = productService.findByValue(PRODUCT_FIELD_NAME , searchString,
+                Operator.AND, fuzziness , prefixLength);
         assertEquals(expectedFoundCount , foundProducts.size());
     }
 
