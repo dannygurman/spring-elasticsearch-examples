@@ -1,10 +1,7 @@
 package spring.examples.elasticsearch.services;
 
 import org.elasticsearch.common.unit.Fuzziness;
-import org.elasticsearch.index.query.MatchQueryBuilder;
-import org.elasticsearch.index.query.Operator;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.*;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.IndexOperations;
 import org.springframework.data.elasticsearch.core.SearchHits;
@@ -154,6 +151,11 @@ public abstract class AbstractServiceWithESRestTemplate<T extends Entity> {
         return findByValuesInternal(matchQueryBuilder);
     }
 
+    public List<T> findPhraseByValue(String fieldName, String value,  int slop) {
+        MatchPhraseQueryBuilder matchQueryBuilder = createMatchPhraseQueryBuilder(fieldName, value, slop);
+        return findByValuesInternal(matchQueryBuilder);
+    }
+
     /**
      *
      * fuzziness:  When the user makes a typo in a word, it is still possible to match it with a search by
@@ -173,6 +175,13 @@ public abstract class AbstractServiceWithESRestTemplate<T extends Entity> {
                 .operator(operator)
                 .prefixLength(prefixLength);
     }
+
+    private MatchPhraseQueryBuilder createMatchPhraseQueryBuilder(String fieldName, String value, int slop) {
+        return QueryBuilders
+                .matchPhraseQuery(fieldName, value)
+                .slop(slop);
+    }
+
 
 
     /*  Using NativeQuery

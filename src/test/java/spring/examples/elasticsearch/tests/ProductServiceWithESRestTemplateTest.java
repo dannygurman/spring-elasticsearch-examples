@@ -201,6 +201,42 @@ public class ProductServiceWithESRestTemplateTest {
         assertEquals(expectedFoundCount , foundProducts.size());
     }
 
+    @Test
+    public void whenSearchWithPhraseMatchQuery_oneSearchTerm_ThenFound() {
+        String productName = "abc def ghi";
+        String searchString = "abc";
+        int slop = 0;
+        int expected = 1;
+        verifyPhraseMatch_internal(slop, productName, searchString, expected);
+    }
+
+    @Test
+    public void whenSearchWithPhraseMatchQuery_withSlop_ThenFound() {
+        String productName = "abc def ghi";
+        String searchString = "abc ghi";
+        int slop = 1;
+        int expected = 1;
+        verifyPhraseMatch_internal(slop, productName, searchString, expected);
+    }
+
+    @Test
+    public void whenSearchWithPhraseMatchQuery_noSlop_ThenNotFound() {
+        String productName = "abc def ghi";
+        String searchString = "abc ghi";
+        int slop = 0;
+        int expected = 0;
+        verifyPhraseMatch_internal(slop, productName, searchString, expected);
+    }
+
+
+    private void verifyPhraseMatch_internal(int slop, String productName, String searchString, int expected) {
+        Product pr1 = Product.builder().name(productName).build();
+        productService.indexItem(pr1);
+        productService.refresh();
+        List<Product> foundProducts = productService.findPhraseByValue(PRODUCT_FIELD_NAME, searchString, slop);
+        assertEquals(expected, foundProducts.size());
+    }
+
 
     private void printIndexMapping(){
         System.out.println("*************************");
