@@ -1,6 +1,7 @@
 package spring.examples.elasticsearch.tests;
 
 import org.elasticsearch.common.unit.Fuzziness;
+import org.elasticsearch.index.query.MultiMatchQueryBuilder;
 import org.elasticsearch.index.query.Operator;
 import org.junit.After;
 import org.junit.Before;
@@ -10,12 +11,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import spring.examples.elasticsearch.model.Product;
+import spring.examples.elasticsearch.model.SearchResult;
 import spring.examples.elasticsearch.services.ProductServiceWithESRestTemplate;
 
 import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static spring.examples.elasticsearch.config.IndexConsts.PRODUCT_FIELD_MANUFACTURER;
 import static spring.examples.elasticsearch.config.IndexConsts.PRODUCT_FIELD_NAME;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -238,10 +241,56 @@ public class ProductServiceWithESRestTemplateTest {
     }
 
 
+    @Test
+    public void whenMultiMatchSerch_WithTwoFieldsMatch_ThenFound() {
+        String productName = "product1";
+        String manufacturer = productName;
+        String searchString = productName;
+        //“best fields” scoring strategy will take the maximum score among the fields as a document score.
+        MultiMatchQueryBuilder.Type scoringStrategyType = MultiMatchQueryBuilder.Type.BEST_FIELDS;
+        int expected = 1;
+        verifyMultiMatch_internal(productName, manufacturer, searchString, scoringStrategyType, expected);
+    }
+
+    @Test
+    public void whenMultiMatchSerch_WithOneFieldsMatch_ThenFound() {
+        String productName = "product1";
+        String manufacturer = "xxx";
+        String searchString = productName;
+        //“best fields” scoring strategy will take the maximum score among the fields as a document score.
+        MultiMatchQueryBuilder.Type scoringStrategyType = MultiMatchQueryBuilder.Type.BEST_FIELDS;
+        int expected = 1;
+        verifyMultiMatch_internal(productName, manufacturer, searchString, scoringStrategyType, expected);
+    }
+
+
+    private void verifyMultiMatch_internal(String productName, String manufacturer,
+                                           String searchString,
+                                           MultiMatchQueryBuilder.Type scoringStrategyType,
+                                           int expectedNumOfMatch) {
+        Product pr1 = Product.builder()
+                .name(productName)
+                .manufacturer(manufacturer)
+                .build();
+        productService.indexItem(pr1);
+        productService.refresh();
+        String [] fieldsToSearchIn = {PRODUCT_FIELD_NAME, PRODUCT_FIELD_MANUFACTURER};
+        List<SearchResult<Product>> results = productService.findValueByMultipleFields(fieldsToSearchIn, searchString, scoringStrategyType);
+        assertEquals(expectedNumOfMatch, results.size());
+        printResults(results);
+
+    }
+
     private void printIndexMapping(){
-        System.out.println("*************************");
+        System.out.println("^^^^***********************");
         System.out.println(productService.mappingToString());
-        System.out.println("*************************");
+        System.out.println("^^^***********************");
+    }
+
+    private void printResults(List<SearchResult<Product>> results){
+        System.out.println("^^^^^^^^^^^^ results ^^^^^^^^^^^^^^^^^^^^^^^");
+        results.forEach(System.out::println);
+        System.out.println("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
     }
 
 }

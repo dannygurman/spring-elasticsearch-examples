@@ -9,15 +9,13 @@ import org.springframework.data.elasticsearch.core.document.Document;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.data.elasticsearch.core.query.*;
 import spring.examples.elasticsearch.model.Entity;
-import spring.examples.elasticsearch.model.QueryResponse;
+import spring.examples.elasticsearch.model.SearchResult;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static spring.examples.elasticsearch.config.IndexConsts.*;
 
 public abstract class AbstractServiceWithESRestTemplate<T extends Entity> {
 
@@ -137,7 +135,7 @@ public abstract class AbstractServiceWithESRestTemplate<T extends Entity> {
 
     public List<T> findByValue(String fieldName, String value) {
         QueryBuilder matchQueryBuilder = createBasicMatchQueryBuilder(fieldName, value);
-        return findByValuesInternal(matchQueryBuilder);
+        return findItemsByValuesInternal(matchQueryBuilder);
 
     }
 
@@ -148,13 +146,20 @@ public abstract class AbstractServiceWithESRestTemplate<T extends Entity> {
     public List<T> findByValue(String fieldName, String value,  Operator operator, Fuzziness fuzziness,
                                   int prefixLength) {
         QueryBuilder matchQueryBuilder = createMatchQueryBuilder(fieldName, value, operator , fuzziness, prefixLength);
-        return findByValuesInternal(matchQueryBuilder);
+        return findItemsByValuesInternal(matchQueryBuilder);
     }
 
     public List<T> findPhraseByValue(String fieldName, String value,  int slop) {
         MatchPhraseQueryBuilder matchQueryBuilder = createMatchPhraseQueryBuilder(fieldName, value, slop);
-        return findByValuesInternal(matchQueryBuilder);
+        return findItemsByValuesInternal(matchQueryBuilder);
     }
+
+    public List<SearchResult<T>>  findValueByMultipleFields(String[] fieldsName, String valueToFind,
+                                             MultiMatchQueryBuilder.Type scoringStrategyType) {
+        MultiMatchQueryBuilder matchQueryBuilder = createMultiMatchPhraseQueryBuilder(fieldsName, valueToFind, scoringStrategyType);
+        return findResultsByValuesInternal(matchQueryBuilder);
+    }
+
 
     /**
      *
@@ -182,35 +187,45 @@ public abstract class AbstractServiceWithESRestTemplate<T extends Entity> {
                 .slop(slop);
     }
 
+    private MultiMatchQueryBuilder createMultiMatchPhraseQueryBuilder(String[] fieldsName, String valueToFind,
+                                                                      MultiMatchQueryBuilder.Type scoringStrategyType) {
+        MultiMatchQueryBuilder queryBuilder = QueryBuilders
+                .multiMatchQuery(valueToFind)
+                .type(scoringStrategyType);
+        for (String fieldName : fieldsName) {
+            queryBuilder.field(fieldName);
+        }
+        return queryBuilder;
+    }
 
 
     /*  Using NativeQuery
       NativeQuery provides the maximum flexibility for building a query using objects
        representing Elasticsearch constructs like aggregation, filter, and sort.
        */
-    private List <T> findByValuesInternal(QueryBuilder queryBuilder) {
-        Query searchQuery =  new NativeSearchQueryBuilder().withQuery(queryBuilder).build();
+    private List<SearchResult<T>> findResultsByValuesInternal(QueryBuilder queryBuilder) {
+        Query searchQuery = new NativeSearchQueryBuilder().withQuery(queryBuilder).build();
         SearchHits<T> searchHits = elasticsearchOperations.search(searchQuery, itemClazz, getIndexCoordinates());
-        List<T> items = getItems(searchHits);
-        return items;
+        return getSearchResults(searchHits);
     }
 
-
-
-
-
-    private List<QueryResponse<T>> getQueryResponses(SearchHits<T> searchHits) {
-        if (searchHits.isEmpty()){
-            return new ArrayList<>();
-        }
-        return searchHits.stream()
-                .map(QueryResponse::new)
+    private List<T> findItemsByValuesInternal(QueryBuilder queryBuilder) {
+        List<SearchResult<T>> results = findResultsByValuesInternal(queryBuilder);
+        return results
+                .stream()
+                .map(res -> res.getContent())
                 .collect(Collectors.toList());
     }
 
-    private List<T> getItems(SearchHits<T> searchHits) {
-        return getQueryResponses(searchHits)
-                .stream()
-                .map(res -> res.getContent()).collect(Collectors.toList());
+
+    private List<SearchResult<T>> getSearchResults(SearchHits<T> searchHits) {
+        if (searchHits.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return searchHits.stream()
+                .map(SearchResult::new)
+                .collect(Collectors.toList());
     }
+
+
 }
