@@ -2,6 +2,12 @@ package spring.examples.elasticsearch.services;
 
 import org.elasticsearch.common.unit.Fuzziness;
 import org.elasticsearch.index.query.*;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.BucketOrder;
+import org.elasticsearch.search.aggregations.InternalOrder;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.IndexOperations;
 import org.springframework.data.elasticsearch.core.SearchHits;
@@ -227,5 +233,19 @@ public abstract class AbstractServiceWithESRestTemplate<T extends Entity> {
                 .collect(Collectors.toList());
     }
 
+
+    private SearchSourceBuilder createAggregationSearchSourceBuilder() {
+        TermsAggregationBuilder aggregation = AggregationBuilders
+                .terms("top_tags")
+                .field("tags")
+                //Order - Gets the order in which the buckets will be returned.
+                .order(createBucketOrderByCount(false));
+        return new SearchSourceBuilder().aggregation(aggregation);
+    }
+
+    private BucketOrder createBucketOrderByCount(boolean isAscendingOrder) {
+        //Creates a bucket ordering strategy that sorts buckets by their document counts (ascending or descending).
+        return BucketOrder.count(isAscendingOrder);
+    }
 
 }
