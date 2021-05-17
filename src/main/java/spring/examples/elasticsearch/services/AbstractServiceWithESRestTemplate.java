@@ -234,14 +234,19 @@ public abstract class AbstractServiceWithESRestTemplate<T extends Entity> {
     }
 
 
-    private SearchSourceBuilder createTermsAggregationBuilder(String termAggregationName, String field,boolean isAscendingOrder) {
+    private SearchSourceBuilder createTermsAggregationBuilder(String termAggregationName,
+                                                              String field,
+                                                              boolean isAscendingOrder,
+                                                              int maxBucketsCount) {
         //	terms(java.lang.String name)- Create a new Terms aggregation with the given name.
         TermsAggregationBuilder aggregation = AggregationBuilders.terms(termAggregationName);
         aggregation
                 //Sets the field to use for this aggregation.
                 .field(field)
                 //Order - Gets the order in which the buckets will be returned.
-                .order(createBucketOrderByCount(isAscendingOrder));
+                .order(createBucketOrderByCount(isAscendingOrder))
+       // Sets the size - indicating how many term buckets should be returned (defaults to 10);
+        .size(maxBucketsCount);
         return new SearchSourceBuilder().aggregation(aggregation);
     }
 
