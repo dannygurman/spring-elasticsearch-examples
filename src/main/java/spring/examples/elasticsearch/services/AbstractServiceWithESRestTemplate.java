@@ -1,10 +1,10 @@
 package spring.examples.elasticsearch.services;
 
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.common.unit.Fuzziness;
 import org.elasticsearch.index.query.*;
-import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.BucketOrder;
-import org.elasticsearch.search.aggregations.InternalOrder;
+import org.elasticsearch.search.aggregations.*;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -234,10 +234,34 @@ public abstract class AbstractServiceWithESRestTemplate<T extends Entity> {
     }
 
 
-    private SearchSourceBuilder createTermsAggregationBuilder(String termAggregationName,
+    public Aggregation getTermAggregationByField(String field, boolean isAscendingOrder,
+                                                 int maxBucketsCount) {
+        String termAggregationName = "my_agg_by_field_" + field;
+        AggregationBuilder subAggregation = null;
+        TermsAggregationBuilder termsAggregationBuilder = createTermsAggregationBuilder(termAggregationName, field,
+                isAscendingOrder, maxBucketsCount, subAggregation);
+        return invokeAggregationSearchInternal(termAggregationName, termsAggregationBuilder);
+    }
+
+    private Aggregation invokeAggregationSearchInternal(String termAggregationName,
+                                                        TermsAggregationBuilder termsAggregationBuilder) {
+        NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
+                .addAggregation(termsAggregationBuilder)
+                //.withSourceFilter(new FetchSourceFilter(new String[] { fieldName }, new String[] { "" }))//filter it to retrieve only the field we ar interested
+                //  .withPageable(PageRequest.of(0, 1))
+                .build();
+        SearchHits<T> searchHits = elasticsearchOperations.search(searchQuery, itemClazz, getIndexCoordinates());
+        Aggregations aggregationResult = searchHits.getAggregations();
+        Map<String, Aggregation> aggregationMap = aggregationResult.asMap();
+        Aggregation aggregation = aggregationMap.get(termAggregationName);
+        return aggregation;
+    }
+
+    private TermsAggregationBuilder createTermsAggregationBuilder(String termAggregationName,
                                                               String field,
                                                               boolean isAscendingOrder,
-                                                              int maxBucketsCount) {
+                                                              int maxBucketsCount,
+                                                              AggregationBuilder subAggregation) {
         //	terms(java.lang.String name)- Create a new Terms aggregation with the given name.
         TermsAggregationBuilder aggregation = AggregationBuilders.terms(termAggregationName);
         aggregation
@@ -247,7 +271,10 @@ public abstract class AbstractServiceWithESRestTemplate<T extends Entity> {
                 .order(createBucketOrderByCount(isAscendingOrder))
        // Sets the size - indicating how many term buckets should be returned (defaults to 10);
         .size(maxBucketsCount);
-        return new SearchSourceBuilder().aggregation(aggregation);
+        if (subAggregation != null) {
+            aggregation.subAggregation(subAggregation);
+        }
+        return aggregation;
     }
 
     private BucketOrder createBucketOrderByCount(boolean isAscendingOrder) {
