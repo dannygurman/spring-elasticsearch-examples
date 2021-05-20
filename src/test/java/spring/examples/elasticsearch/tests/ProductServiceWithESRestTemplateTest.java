@@ -3,6 +3,9 @@ package spring.examples.elasticsearch.tests;
 import org.elasticsearch.common.unit.Fuzziness;
 import org.elasticsearch.index.query.MultiMatchQueryBuilder;
 import org.elasticsearch.index.query.Operator;
+import org.elasticsearch.search.aggregations.Aggregation;
+import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation;
+import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -10,14 +13,18 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import spring.examples.elasticsearch.model.AggregationBucket;
 import spring.examples.elasticsearch.model.Product;
 import spring.examples.elasticsearch.model.SearchResult;
 import spring.examples.elasticsearch.services.ProductServiceWithESRestTemplate;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static spring.examples.elasticsearch.config.IndexConsts.PRODUCT_FIELD_MANUFACTURER;
 import static spring.examples.elasticsearch.config.IndexConsts.PRODUCT_FIELD_NAME;
 
@@ -278,7 +285,64 @@ public class ProductServiceWithESRestTemplateTest {
         List<SearchResult<Product>> results = productService.findValueByMultipleFields(fieldsToSearchIn, searchString, scoringStrategyType);
         assertEquals(expectedNumOfMatch, results.size());
         printResults(results);
+    }
 
+    @Test
+    public void whenAggregationByKeyword_OrderedByPagesCount_ThenFoundBucketsAsExpected() {
+        String manufacturer_1 = "manufactor_1";
+        int startIndex = 1;
+        int productsCount_1 = 5;
+        createAndBulkIndexProducts(startIndex, productsCount_1, manufacturer_1);
+
+        String manufacturer_2 = "manufactor_2";
+         startIndex = 10;
+        int productsCount_2 = 10;
+        createAndBulkIndexProducts(startIndex, productsCount_2, manufacturer_2);
+
+        //Performing aggregation
+        //MANUFACTURER is keyword field - can be used for aggregation
+        String field = PRODUCT_FIELD_MANUFACTURER;
+        boolean isAscendingOrder = true;
+
+        //If set to 1 - only 1 bucket will be returned
+        int  maxBucketsCount = 2;
+
+        Aggregation aggregation = productService.getTermAggregationByField(field, isAscendingOrder, maxBucketsCount );
+
+        MultiBucketsAggregation multiPacketAggregation = (MultiBucketsAggregation) aggregation;
+        List<AggregationBucket> buckets = productService.getAggregatinBuckets(multiPacketAggregation);
+
+        assertEquals(maxBucketsCount, buckets.size());
+
+        //Note - the order is fixed!:
+        //bucket1 will match manufacturer_1 and bucket2 match manufacturer_2
+        //since productsCount_1 < productsCount_2 and isAscendingOrder = true
+        AggregationBucket bucket1 =  buckets.get(0);
+        AggregationBucket bucket2 =  buckets.get(1);
+
+       // List <String> expectedAggregationKeys = Arrays.asList(manufacturer_1 , manufacturer_2);
+        //check bucket keys
+        assertEquals(manufacturer_1, bucket1.getKey());
+        assertEquals(manufacturer_2, bucket2.getKey());
+
+        //check bucket counts
+        assertEquals(productsCount_1, bucket1.getDocsCount());
+        assertEquals(productsCount_2, bucket2.getDocsCount());
+    }
+
+
+    private void createAndBulkIndexProducts(int startIndex, int productsCount, String manufacturer) {
+       List  <Product>  products = new ArrayList<>();
+       int endIndex = startIndex + productsCount - 1;
+       for (int ind = startIndex; ind <= endIndex ; ind++ ) {
+           products.add(Product.builder()
+                   .id("id_" + ind)
+                   .name("pro" + ind)
+                   .manufacturer(manufacturer)
+                   .build());
+           productService.bulkIndexItem(products);
+           productService.refresh();
+       }
     }
 
     private void printIndexMapping(){

@@ -5,6 +5,7 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.common.unit.Fuzziness;
 import org.elasticsearch.index.query.*;
 import org.elasticsearch.search.aggregations.*;
+import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -14,6 +15,7 @@ import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.document.Document;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.data.elasticsearch.core.query.*;
+import spring.examples.elasticsearch.model.AggregationBucket;
 import spring.examples.elasticsearch.model.Entity;
 import spring.examples.elasticsearch.model.SearchResult;
 
@@ -255,6 +257,14 @@ public abstract class AbstractServiceWithESRestTemplate<T extends Entity> {
         Map<String, Aggregation> aggregationMap = aggregationResult.asMap();
         Aggregation aggregation = aggregationMap.get(termAggregationName);
         return aggregation;
+    }
+
+    //Note - the bucket order is saved
+    public List<AggregationBucket> getAggregatinBuckets(MultiBucketsAggregation multiBucketsAggregation) {
+        return multiBucketsAggregation.getBuckets()
+                .stream()
+                .map(AggregationBucket::new)
+                .collect(Collectors.toList());
     }
 
     private TermsAggregationBuilder createTermsAggregationBuilder(String termAggregationName,
