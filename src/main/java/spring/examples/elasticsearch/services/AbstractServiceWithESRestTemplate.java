@@ -9,6 +9,7 @@ import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.IndexOperations;
 import org.springframework.data.elasticsearch.core.SearchHits;
@@ -213,18 +214,25 @@ public abstract class AbstractServiceWithESRestTemplate<T extends Entity> {
        */
     private List<SearchResult<T>> findResultsByValuesInternal(QueryBuilder queryBuilder) {
         Query searchQuery = new NativeSearchQueryBuilder().withQuery(queryBuilder).build();
-        SearchHits<T> searchHits = elasticsearchOperations.search(searchQuery, itemClazz, getIndexCoordinates());
+        SearchHits<T> searchHits =searchInternal(searchQuery);
         return getSearchResults(searchHits);
+    }
+
+    private SearchHits<T> searchInternal (Query searchQuery) {
+      return elasticsearchOperations.search(searchQuery, itemClazz, getIndexCoordinates());
     }
 
     private List<T> findItemsByValuesInternal(QueryBuilder queryBuilder) {
         List<SearchResult<T>> results = findResultsByValuesInternal(queryBuilder);
+       return getItemsFromResults(results);
+    }
+
+    private List<T>  getItemsFromResults(List<SearchResult<T>> results) {
         return results
                 .stream()
                 .map(res -> res.getContent())
                 .collect(Collectors.toList());
     }
-
 
     private List<SearchResult<T>> getSearchResults(SearchHits<T> searchHits) {
         if (searchHits.isEmpty()) {
@@ -233,6 +241,11 @@ public abstract class AbstractServiceWithESRestTemplate<T extends Entity> {
         return searchHits.stream()
                 .map(SearchResult::new)
                 .collect(Collectors.toList());
+    }
+
+    public List <T>  getItemsFromResults(SearchHits<T> searchHits){
+        List<SearchResult<T>> result = getSearchResults(searchHits);
+        return getItemsFromResults(result);
     }
 
 
@@ -252,7 +265,7 @@ public abstract class AbstractServiceWithESRestTemplate<T extends Entity> {
                 //.withSourceFilter(new FetchSourceFilter(new String[] { fieldName }, new String[] { "" }))//filter it to retrieve only the field we ar interested
                 //  .withPageable(PageRequest.of(0, 1))
                 .build();
-        SearchHits<T> searchHits = elasticsearchOperations.search(searchQuery, itemClazz, getIndexCoordinates());
+        SearchHits<T> searchHits = searchInternal(searchQuery);
         Aggregations aggregationResult = searchHits.getAggregations();
         Map<String, Aggregation> aggregationMap = aggregationResult.asMap();
         Aggregation aggregation = aggregationMap.get(termAggregationName);
@@ -290,6 +303,32 @@ public abstract class AbstractServiceWithESRestTemplate<T extends Entity> {
     private BucketOrder createBucketOrderByCount(boolean isAscendingOrder) {
         //Creates a bucket ordering strategy that sorts buckets by their document counts (ascending or descending).
         return BucketOrder.count(isAscendingOrder);
+    }
+
+
+    public  List<T> findItemsWithFieldValuesInRange(String fieldName, Object lowerBound, Object upperBound) {
+        CriteriaQuery query = buildRangeCriteriaQuery(fieldName, lowerBound, upperBound);
+        SearchHits<T> searchHits = searchInternal(query);
+        return getItemsFromResults(searchHits);
+    }
+
+
+    private CriteriaQuery buildRangeCriteriaQuery(String fieldName, Object lowerBound, Object upperBound) {
+        Criteria criteria = new Criteria(fieldName)
+                .greaterThanEqual(lowerBound)
+                .lessThanEqual(upperBound);
+        return new CriteriaQuery(criteria);
+    }
+
+    //Query text could include "*"
+    public List<T> findItemsByFieldUsingWildcard(String fieldName, String query, int maxResults) {
+        QueryBuilder queryBuilder = QueryBuilders.wildcardQuery(fieldName, query);
+        Query searchQuery = new NativeSearchQueryBuilder()
+                .withFilter(queryBuilder)
+                .withPageable(PageRequest.of(0, maxResults))
+                .build();
+        SearchHits<T> searchHits = searchInternal(searchQuery);
+        return getItemsFromResults(searchHits);
     }
 
 }

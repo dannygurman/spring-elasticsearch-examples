@@ -8,4 +8,5 @@ public class IndexConsts {
     public static final String PRODUCT_FIELD_NAME  = "name";
     public static final String PRODUCT_FIELD_CATEGORY  = "category";
     public static final String PRODUCT_FIELD_MANUFACTURER  = "manufacturer";
+    public static final String PRODUCT_FIELD_PRICE  = "price";
 }

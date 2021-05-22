@@ -25,8 +25,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static spring.examples.elasticsearch.config.IndexConsts.PRODUCT_FIELD_MANUFACTURER;
-import static spring.examples.elasticsearch.config.IndexConsts.PRODUCT_FIELD_NAME;
+import static spring.examples.elasticsearch.config.IndexConsts.*;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest
@@ -289,15 +288,16 @@ public class ProductServiceWithESRestTemplateTest {
 
     @Test
     public void whenAggregationByKeyword_OrderedByPagesCount_ThenFoundBucketsAsExpected() {
+        Integer price = 10;
         String manufacturer_1 = "manufactor_1";
         int startIndex = 1;
         int productsCount_1 = 5;
-        createAndBulkIndexProducts(startIndex, productsCount_1, manufacturer_1);
+        createAndBulkIndexProducts(startIndex, productsCount_1, manufacturer_1, price);
 
         String manufacturer_2 = "manufactor_2";
          startIndex = 10;
         int productsCount_2 = 10;
-        createAndBulkIndexProducts(startIndex, productsCount_2, manufacturer_2);
+        createAndBulkIndexProducts(startIndex, productsCount_2, manufacturer_2, price);
 
         //Performing aggregation
         //MANUFACTURER is keyword field - can be used for aggregation
@@ -331,7 +331,51 @@ public class ProductServiceWithESRestTemplateTest {
     }
 
 
-    private void createAndBulkIndexProducts(int startIndex, int productsCount, String manufacturer) {
+    @Test
+    public void whenSearchCriteriaQuery_ByFieldRange_ThenFound() {
+        String manufacturer_1 = "manufactor";
+        Integer price = 10;
+        int startIndex = 1;
+        int productsCount_1 = 2;
+        createAndBulkIndexProducts(startIndex, productsCount_1, manufacturer_1, price);
+
+        price = 15;
+        startIndex = 10;
+        int productsCount_2 = 2;
+        createAndBulkIndexProducts(startIndex, productsCount_2, manufacturer_1, price);
+
+        price = 100;//Out of search range
+        startIndex = 20;
+        int productsCount_3 = 2;
+        createAndBulkIndexProducts(startIndex, productsCount_3, manufacturer_1, price);
+
+        String fieldName = PRODUCT_FIELD_PRICE;
+        Integer minPrice = 10;
+        Integer maxPrice = 20;
+        List<Product> foundProducts = productService.findItemsWithFieldValuesInRange (fieldName, minPrice, maxPrice);
+        int expectedFoundProductCount = productsCount_1 + productsCount_2;
+        assertEquals(expectedFoundProductCount, foundProducts.size());
+    }
+
+    @Test
+    public void whenSearchByField_WithWildcard_ThenFound() {
+        List  <Product>  products = new ArrayList<>();
+        products.add(Product.builder().name("xaz").build());
+        products.add(Product.builder().name("xbz").build());
+        products.add(Product.builder().name("xcz").build());
+        products.add(Product.builder().name("xdz").build());
+        productService.bulkIndexItem(products);
+        productService.refresh();
+
+        int maxResultsToReturn = 3;
+        String queryTxt = "x*z"; //Using wildcard
+        List<Product> foundProducts = productService.findItemsByFieldUsingWildcard(PRODUCT_FIELD_NAME, queryTxt, maxResultsToReturn);
+        assertEquals(maxResultsToReturn, foundProducts.size());
+    }
+
+
+
+    private void createAndBulkIndexProducts(int startIndex, int productsCount, String manufacturer, Integer price) {
        List  <Product>  products = new ArrayList<>();
        int endIndex = startIndex + productsCount - 1;
        for (int ind = startIndex; ind <= endIndex ; ind++ ) {
@@ -339,6 +383,7 @@ public class ProductServiceWithESRestTemplateTest {
                    .id("id_" + ind)
                    .name("pro" + ind)
                    .manufacturer(manufacturer)
+                   .price(price)
                    .build());
            productService.bulkIndexItem(products);
            productService.refresh();

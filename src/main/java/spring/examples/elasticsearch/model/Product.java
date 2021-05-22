@@ -6,8 +6,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.*;
 import spring.examples.elasticsearch.config.IndexConsts;
 
-import static spring.examples.elasticsearch.config.IndexConsts.PRODUCT_FIELD_CATEGORY;
-import static spring.examples.elasticsearch.config.IndexConsts.PRODUCT_FIELD_NAME;
+import static spring.examples.elasticsearch.config.IndexConsts.*;
 
 @Document(indexName = IndexConsts.PRODUCTS_INDEX_NAME)
 @Builder
@@ -25,8 +24,8 @@ public class Product implements Entity {
     @Field(type = FieldType.Text, name = PRODUCT_FIELD_NAME)
     private String name;
 
-    @Field(type = FieldType.Double, name = "price")
-    private Double price;
+    @Field(type = FieldType.Integer, name = PRODUCT_FIELD_PRICE)
+    private Integer price;
 
     @Field(type = FieldType.Integer, name = "quantity")
     private Integer quantity;
