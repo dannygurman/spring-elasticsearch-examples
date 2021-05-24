@@ -1,0 +1,14 @@
+Most Relevant Document for Search:
+1. Know of document existence - For example using web pages crawler
+2. index the document for lookup - Inverted index
+3. Know how rlevant the cocument is - Scoring
+4. retrieve ranked by relevance - search
+
+
+indexing:
+Tokenize text into words:
+* split words
+* lower  case
+* remove punctuation
+
+

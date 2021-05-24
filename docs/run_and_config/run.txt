@@ -1,0 +1,3 @@
+./bin/elasticsearch
+
+./bin/elasticsearch -Ecluster.name=pluralsight_es -Enode.name=my_node name
