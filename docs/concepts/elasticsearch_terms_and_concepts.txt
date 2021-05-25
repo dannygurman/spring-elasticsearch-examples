@@ -1,0 +1,61 @@
+Elasticsearch is a distributed search and analytics engine which runs on Lucene
+
+An open source, search and analytics engine,written in Java built on Apache Lucene
+
+Distributed: Scales to thousands of nodes
+
+High availability: Multiple copies of data
+
+RESTful API: CRUD, monitoring and other operation via simple JSON-based HTTP calls
+
+Powerful Query DSL: Express complex queries simply
+
+Schemaless: Index data without an explicit schema
+
+Working with Elasticsearch: On local machines or As a service in  the cloud
+https://www.elastic.co/cloud/as-a-service
+
+Basic Concepts
+------------------------
+
+Near Realtime Search- ~1 second from the time a document is indexed until it becomes searchable
+
+Node:
+Single server
+Performs indexing
+Allows search
+Has a unique id and name
+
+Cluster:
+Collection of nodes
+Holds the entire indexed data
+Has a unique name
+Nodes join a cluster using the cluster name
+
+Document:
+Basic unit of information to be indexed
+Expressed in JSON
+Resides within an index
+Documents need to be indexed so they can be searched
+
+Index:
+Collection of similar documents Identified by name
+Any number of indices in a cluster
+Different indices for different logical groupings
+
+Shards:
+Sometimes the amount of all docs size too large to fit in the hard disk of one node
+or/and it too slow to serve all search requests from one node-
+Split the index across multiple nodes in the cluster
+
+Sharding an index
+Search in parallel on multiple nodes
+
+Replicas:
+High availability in case a node fails
+Scale search volume/throughput by searching multiple replicas
+
+Shards and Replicas:
+An index can be split into multiple shards
+A shard can be replicated zero or moretimes
+An index in Elasticsearch has 5 shards and 1 replica by default
