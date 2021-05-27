@@ -1,9 +1,16 @@
 Most Relevant Document for Search:
 1. Know of document existence - For example using web pages crawler
-2. index the document for lookup - Inverted index
-3. Know how rlevant the cocument is - Scoring
-4. retrieve ranked by relevance - search
+    specify document to index
 
+2. index the document for lookup - Inverted index
+Elasticsearch create the inverted index "behind the scene"
+
+3. Know how rlevant the cocument is - Scoring
+Applies a scoring algorithm for each document for each term
+
+
+4. retrieve ranked by relevance - search
+Retrieves documents using a Query DSL
 
 indexing:
 Tokenize text into words:

@@ -1,0 +1,26 @@
+TF/IDF- Term Frequency/Inverse Document Frequency
+
+Term frequency -How often does the term appear in the field?
+
+Inverse document frequency-How often does the term appear in the index?
+
+Field-length norm How long is the field which was searched?
+
+Term Frequency- More often, more relevant A field containing 4 mentions of a term
+is more relevant than one which has just one mention
+
+Inverse Document Frequency-More often, less relevant
+If the term is really common across documents in the index, its relevance for a particular document is low
+ e.g. stopwords such as “the”, “this”
+
+ Field-length Norm-
+ Longer fields, less relevant
+ A term appearing in a longer field is one of a larger set, so less relevant e.g.
+ words in the title of a book are more relevant than words in the  contents
+
+ Elasticsearch Relevance Algorithm
+The TF/IDF score can be combined with other factors based on the query clause
+
+The Common Terms Problem
+Search for “The quick brown fox”
+The word “the” is likely to match a huge number of documents With low relevance to the actual search

@@ -1,0 +1,28 @@
+Terms filter is automatically cached, whereas an or
+filter of many term filters is not automatically cached.
+But the results you will get back should be the same.
+
+filter query is stored in cache.
+(The cache implements an LRU eviction policy: when a cache becomes full,
+the least recently used data is evicted to make way for new data.)
+
+Term query-Returns documents that contain an exact term in a provided field.
+
+In a filter context, a query clause answers the question “Does this document match this query clause?”
+The answer is a simple Yes or No — no scores are calculated. Filter context is mostly used for filtering structured data, e.g.
+
+GET /_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        { "match": { "title":   "Search"        }},
+        { "match": { "content": "Elasticsearch" }}
+      ],
+      "filter": [
+        { "term":  { "status": "published" }},
+        { "range": { "publish_date": { "gte": "2015-01-01" }}}
+      ]
+    }
+  }
+}

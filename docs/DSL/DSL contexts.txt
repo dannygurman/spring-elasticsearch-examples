@@ -1,0 +1,42 @@
+Search contexts
+
+How well does this document match this query? - Query Context
+
+Does this document match this query clause? - Filter Context
+
+
+Query Context:
+Included or not: Determine whether the document should be part of the result
+
+Relevance score: Calculated for every search term the document maps to
+
+High score, more relevant: More relevant
+documents, higher in the search rankings Query Context
+
+Filter Context
+Included or not: Yes/no determines whether included in the result
+No scoring: No additional relevance ranking in the search results
+Structured data: Exact matches, range queries
+Faster: Only determine inclusion in results, no scoring to consider
+
+Query Terms Specification in requests:
+Search terms as URL query parameters Search
+Search terms within the URL request body
+
+Source filtering to include only those fields that we’re interested in
+
+
+Full text queries using:
+- match
+- match_phrase
+- match_phrase_prefix
+
+Relevance in Elasticsearch-Higher the value of _score more relevant the document
+Each document has a different relevance score based on the query clause
+
+Fuzzy searches might look at how similar the search term is to the word present in the document
+
+Term searches might look at the percentage of search terms that were found in the document
+
+
+
