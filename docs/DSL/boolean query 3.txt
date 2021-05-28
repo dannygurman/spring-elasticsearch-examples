@@ -1,0 +1,9 @@
+Matches documents by combining multiple queries using boolean operators such as AND, OR
+
+must - The clause must appear in matching documents
+
+should - The clause may appear in matching documents but may not sometimes
+
+must_not - The clause must not appear in the document results
+
+filter - The clause must appear in results but results are not scored

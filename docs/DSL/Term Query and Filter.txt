@@ -1,0 +1,24 @@
+The exact term needs to be found in the inverted index for indexed documents
+
+The terms found in the index may vary based on how you analyze them!!
+Query uses an analyzer to find the best matches.
+
+
+Two Contexts of Search - Query Context and Search Context
+
+Filters - The documents in the result are NOT  scored
+
+Each document responds yes/no to whether it should be included in the result
+
+Filters are automatically cached
+
+
+
+The rule of a thumb would be to use filters for:
+yes/no search
+search on exact values (numeric, range and keyword)
+
+Use queries for:
+ambiguous result (some documents suit more than others)
+full-text search
+Unless you need relevance score or full-text search always try to use filters. Filters are “cheaper”.

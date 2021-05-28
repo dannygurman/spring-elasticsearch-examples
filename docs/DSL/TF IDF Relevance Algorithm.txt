@@ -24,3 +24,13 @@ The TF/IDF score can be combined with other factors based on the query clause
 The Common Terms Problem
 Search for “The quick brown fox”
 The word “the” is likely to match a huge number of documents With low relevance to the actual search
+Leaving out stopwords can have unexpected impact Unable to distinguish between “great” and “not great”
+
+Split Terms: Low and High Frequency:
+Low: “quick brown fox”
+High: “the”
+
+Search for documents which have the rarer terms first
+Look for the high frequency terms in the document subset which match the low frequency terms
+Improved relevance,
+good performance
