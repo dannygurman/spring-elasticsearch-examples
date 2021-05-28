@@ -1,0 +1,47 @@
+Four Types of Aggregations:Metric,Bucketing,Matrix,Pipeline
+
+Metric - Aggregations over a set of documents suxh as Avg and the multi-value stats aggregation
+- All documents in a search result
+- Documents within a logical group
+
+Bucketing - Logically group documents based on  search query
+A document falls into a bucket if the criteria matches
+Each bucket associated with a key
+
+Matrix - Operates on multiple fields and produces a matrix result
+Experimental and may change in future releases
+
+Pipeline - Aggregations that work on the output of other aggregations
+Experimental and may change in future releases
+
+Cardinality, the number of unique values in a field
+
+Enable fielddata for text fields via mappings
+
+Search vs. Aggregations:
+Search:
+Inverted index of the terms present in documents
+The terms themselves can be hashed and stored in the index
+Which documents contain this term?”
+
+Aggregation:
+Actual value of fields present in documents
+Actual values of the terms are needed, hash values do not suffice
+“What is the value of this field for this document?”
+
+
+Getting the Value of a Text Field Text:
+Text field values are stored in an in-memory data structure called fielddata
+fielddata is built on demand when a field is used for aggregations, sorting etc
+fielddata on text fields take up lots of heap space
+fielddata is disabled by default on text fields
+
+Bucketing:
+-------------
+Indexed Documents - Logically group these documents into buckets
+
+
+
+
+
+
